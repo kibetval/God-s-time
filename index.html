@@ -37,7 +37,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
 
-        /* Top Header */
         .status-header {
             background: rgba(0, 230, 118, 0.08);
             border: 1px solid var(--accent-green);
@@ -66,7 +65,6 @@
 
         .dot.active { background-color: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
 
-        /* Setup / Token Input */
         .token-card {
             background: #152230;
             border: 1px solid var(--border-color);
@@ -99,7 +97,6 @@
 
         button:hover { opacity: 0.9; }
 
-        /* Canonical Cycle */
         .cycle-box {
             background: #09121a;
             border: 1px solid var(--border-color);
@@ -119,12 +116,13 @@
         }
 
         .pill {
-            padding: 4px 8px;
+            padding: 6px 10px;
             font-size: 11px;
             background: #162636;
             border-radius: 6px;
             border: 1px solid var(--border-color);
             color: var(--text-muted);
+            cursor: pointer;
         }
 
         .pill.active {
@@ -134,7 +132,6 @@
             background: rgba(0, 176, 255, 0.1);
         }
 
-        /* Best Pick Banner */
         .pick-banner {
             border: 1px solid var(--accent-green);
             background: rgba(0, 230, 118, 0.05);
@@ -165,21 +162,6 @@
             margin: 6px 0;
         }
 
-        .confidence-box {
-            background: #0a1520;
-            border: 1px solid var(--accent-cyan);
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 8px;
-        }
-
-        .confidence-val {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--accent-cyan);
-        }
-
-        /* Grid Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -204,7 +186,6 @@
 
         .stat-big.countdown { color: var(--accent-cyan); }
 
-        /* Digit Visualizer */
         .digit-bar-container {
             display: flex;
             justify-content: space-between;
@@ -228,12 +209,10 @@
             transition: height 0.3s;
         }
 
-        .bar.hot { background: var(--accent-green); }
-        .bar.cold { background: var(--accent-red); }
+        .bar.selected-target { background: var(--accent-yellow) !important; box-shadow: 0 0 8px var(--accent-yellow); }
 
         .digit-lbl { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
 
-        /* Transaction Log */
         .tx-card {
             background: #09121a;
             border: 1px solid var(--border-color);
@@ -250,8 +229,6 @@
         }
 
         .tx-row:last-child { border: none; }
-        .win { color: var(--accent-green); font-weight: bold; }
-        .loss { color: var(--accent-red); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -273,44 +250,55 @@
     <div class="token-card" id="setupPanel">
         <label style="font-size: 11px; color: var(--text-muted);">ENTER DERIV API TOKEN</label>
         <input type="password" id="apiToken" placeholder="e.g. xxxxxxxxxx">
-        <button onclick="startApp()">CONNECT & START AUTO-SCAN</button>
+        <button onclick="startApp()">CONNECT WEBSOCKET</button>
     </div>
 
-    <!-- Canonical Scan Cycle -->
+    <!-- Market Selector -->
     <div class="cycle-box">
-        <div class="cycle-title">Canonical Scan Prediction Cycle</div>
+        <div class="cycle-title">Select Volatility Index Market</div>
         <div class="market-pills">
-            <span class="pill active" id="pill-1HZ10V">10 (1s) Index</span>
-            <span class="pill" id="pill-1HZ25V">25 (1s) Index</span>
-            <span class="pill" id="pill-1HZ50V">50 (1s) Index</span>
-            <span class="pill" id="pill-1HZ75V">75 (1s) Index</span>
+            <span class="pill active" onclick="switchMarket('1HZ10V', 0)" id="pill-1HZ10V">10 (1s)</span>
+            <span class="pill" onclick="switchMarket('1HZ25V', 1)" id="pill-1HZ25V">25 (1s)</span>
+            <span class="pill" onclick="switchMarket('1HZ50V', 2)" id="pill-1HZ50V">50 (1s)</span>
+            <span class="pill" onclick="switchMarket('1HZ75V', 3)" id="pill-1HZ75V">75 (1s)</span>
         </div>
     </div>
 
-    <!-- Best Pick Prediction -->
+    <!-- Target Digit Selector Banner -->
     <div class="pick-banner">
         <div class="banner-head">
-            <span style="color: var(--accent-yellow);">BEST PICK VOLATILITY INDEX</span>
-            <span class="accuracy-tag">#1 ACCURACY VERIFIED</span>
+            <span style="color: var(--accent-yellow);">CHOOSE YOUR TARGET DIGIT</span>
+            <span class="accuracy-tag">MANUAL MODE</span>
         </div>
         <div class="market-title" id="activeMarketName">VOLATILITY 10 (1S) INDEX</div>
-        <div class="confidence-box">
-            <div style="font-size: 10px; color: var(--text-muted);">CONFIDENCE SCORE</div>
-            <div class="confidence-val" id="confidenceVal">-- %</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <span style="font-size: 12px; color: var(--text-muted);">Target Digit to Trade:</span>
+            <select id="targetDigitSelect" style="width: 100px; padding: 6px; margin: 0;" onchange="updateTargetDigit()">
+                <option value="0">Digit 0</option>
+                <option value="1">Digit 1</option>
+                <option value="2">Digit 2</option>
+                <option value="3">Digit 3</option>
+                <option value="4">Digit 4</option>
+                <option value="5">Digit 5</option>
+                <option value="6">Digit 6</option>
+                <option value="7" selected>Digit 7</option>
+                <option value="8">Digit 8</option>
+                <option value="9">Digit 9</option>
+            </select>
         </div>
     </div>
 
-    <!-- Prediction & Countdown -->
+    <!-- Target Stats & Hits -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div style="font-size: 11px; color: var(--text-muted);">PREDICTED MATCH DIGIT</div>
-            <div class="stat-big" id="predictedDigit">-</div>
-            <div style="font-size: 10px; color: var(--accent-green); margin-top: 2px;">HIGH PROBABILITY</div>
+            <div style="font-size: 11px; color: var(--text-muted);">TARGET HITS / TICKS</div>
+            <div class="stat-big" id="targetHitsCount">0 / 0</div>
+            <div style="font-size: 10px; color: var(--accent-yellow); margin-top: 2px;" id="targetHitRate">Rate: 0.0%</div>
         </div>
         <div class="stat-card">
-            <div style="font-size: 11px; color: var(--text-muted);">SCAN COUNTDOWN</div>
-            <div class="stat-big countdown" id="countdownSec">18s</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">CYCLE INTERVAL</div>
+            <div style="font-size: 11px; color: var(--text-muted);">LAST DIGIT SEEN</div>
+            <div class="stat-big countdown" id="lastSeenDigitVal">-</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">LIVE TICK STREAM</div>
         </div>
     </div>
 
@@ -330,7 +318,7 @@
         <div style="font-weight: bold; margin-bottom: 8px; color: var(--accent-cyan);">AUTOMATED ANALYSIS LOGIC</div>
         <div class="tx-row">
             <span>Deriv WS Stream:</span>
-            <span id="wsStateLog" style="color: var(--text-muted);">Inactive</span>
+            <span id="wsStateLog" style="color: var(--text-muted);">Disconnected</span>
         </div>
         <div class="tx-row">
             <span>Target Market:</span>
@@ -348,15 +336,16 @@
     let ws = null;
     let tickHistory = [];
     let currentSymbolIndex = 0;
+    let selectedTargetDigit = 7;
+    let targetHits = 0;
+    let totalTicksCount = 0;
+
     const symbols = [
         { id: '1HZ10V', name: 'VOLATILITY 10 (1S) INDEX' },
         { id: '1HZ25V', name: 'VOLATILITY 25 (1S) INDEX' },
         { id: '1HZ50V', name: 'VOLATILITY 50 (1S) INDEX' },
         { id: '1HZ75V', name: 'VOLATILITY 75 (1S) INDEX' }
     ];
-
-    let countdown = 18;
-    let timerInterval = null;
 
     // Initialize Digit Bar Graph UI
     const barContainer = document.getElementById('barContainer');
@@ -377,9 +366,7 @@
             return;
         }
 
-        document.getElementById('setupPanel').style.display = 'none';
         connectWebSocket(token);
-        startCycleTimer();
     }
 
     function connectWebSocket(token) {
@@ -396,7 +383,6 @@
             if (data.msg_type === 'authorize') {
                 if (data.error) {
                     alert('Auth Error: ' + data.error.message);
-                    location.reload();
                     return;
                 }
                 document.getElementById('dot').classList.add('active');
@@ -407,7 +393,7 @@
                 ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
                 
                 // Subscribe to active market symbol
-                subscribeToMarket(symbols[currentSymbolIndex].id);
+                subscribeToMarket(symbols[currentSymbolIndex].id, currentSymbolIndex);
             }
 
             if (data.msg_type === 'balance') {
@@ -428,25 +414,35 @@
         };
     }
 
-    function subscribeToMarket(symbolId) {
+    function switchMarket(symbolId, index) {
+        currentSymbolIndex = index;
+        tickHistory = [];
+        targetHits = 0;
+        totalTicksCount = 0;
+        subscribeToMarket(symbolId, index);
+    }
+
+    function subscribeToMarket(symbolId, index) {
         if (!ws || ws.readyState !== WebSocket.OPEN) return;
         
-        // Forget previous subscriptions
         ws.send(JSON.stringify({ forget_all: "ticks" }));
-        tickHistory = []; // Reset history for new symbol
-        
-        // Subscribe to new ticks
         ws.send(JSON.stringify({ ticks: symbolId, subscribe: 1 }));
         
-        const activeMarket = symbols.find(s => s.id === symbolId);
+        const activeMarket = symbols[index];
         document.getElementById('activeMarketName').innerText = activeMarket.name;
         document.getElementById('targetMarketLog').innerText = activeMarket.name;
 
-        // Update pills UI
-        symbols.forEach(s => {
+        symbols.forEach((s, idx) => {
             const pill = document.getElementById(`pill-${s.id}`);
-            if (pill) pill.className = s.id === symbolId ? 'pill active' : 'pill';
+            if (pill) pill.className = idx === index ? 'pill active' : 'pill';
         });
+    }
+
+    function updateTargetDigit() {
+        selectedTargetDigit = parseInt(document.getElementById('targetDigitSelect').value);
+        targetHits = 0;
+        totalTicksCount = 0;
+        analyzeDigits();
     }
 
     function processTick(tick) {
@@ -456,12 +452,16 @@
 
         document.getElementById('currentTickPrice').innerText = `PRICE: ${priceStr}`;
         document.getElementById('lastSpotLog').innerText = `${priceStr} (Digit: ${lastDigit})`;
+        document.getElementById('lastSeenDigitVal').innerText = lastDigit;
 
-        // Append to rolling buffer of 50 ticks
         tickHistory.push(lastDigit);
         if (tickHistory.length > 50) tickHistory.shift();
 
-        // Perform Frequency & Probability Analysis
+        totalTicksCount++;
+        if (lastDigit === selectedTargetDigit) {
+            targetHits++;
+        }
+
         analyzeDigits();
     }
 
@@ -471,51 +471,20 @@
         const counts = Array(10).fill(0);
         tickHistory.forEach(d => counts[d]++);
 
-        let maxCount = -1;
-        let minCount = 999;
-        let hotDigit = 0;
-
         for (let i = 0; i <= 9; i++) {
             const pct = (counts[i] / tickHistory.length) * 100;
             const bar = document.getElementById(`bar-${i}`);
+            bar.className = 'bar';
             bar.style.height = `${Math.max(pct * 2.2, 5)}px`;
 
-            if (counts[i] > maxCount) {
-                maxCount = counts[i];
-                hotDigit = i;
-            }
-            if (counts[i] < minCount) {
-                minCount = counts[i];
+            if (i === selectedTargetDigit) {
+                bar.classList.add('selected-target');
             }
         }
 
-        // Highlight hot/cold bars
-        for (let i = 0; i <= 9; i++) {
-            const bar = document.getElementById(`bar-${i}`);
-            bar.className = 'bar';
-            if (counts[i] === maxCount && maxCount > 0) bar.classList.add('hot');
-            else if (counts[i] === minCount) bar.classList.add('cold');
-        }
-
-        // Calculate Confidence Score based on mathematical dominance
-        const dominanceRatio = (maxCount / tickHistory.length);
-        const confidence = Math.min(85 + (dominanceRatio * 35), 98.4).toFixed(1);
-
-        document.getElementById('predictedDigit').innerText = hotDigit;
-        document.getElementById('confidenceVal').innerText = `${confidence}% (90%+)`;
-    }
-
-    function startCycleTimer() {
-        timerInterval = setInterval(() => {
-            countdown--;
-            if (countdown <= 0) {
-                countdown = 18;
-                // Rotate symbol
-                currentSymbolIndex = (currentSymbolIndex + 1) % symbols.length;
-                subscribeToMarket(symbols[currentSymbolIndex].id);
-            }
-            document.getElementById('countdownSec').innerText = `${countdown}s`;
-        }, 1000);
+        const hitRate = totalTicksCount > 0 ? ((targetHits / totalTicksCount) * 100).toFixed(1) : 0.0;
+        document.getElementById('targetHitsCount').innerText = `${targetHits} / ${totalTicksCount}`;
+        document.getElementById('targetHitRate').innerText = `Rate: ${hitRate}%`;
     }
 </script>
 
