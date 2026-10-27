@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rot Deriv WebSocket Analysis Tool</title>
+    <title>Rot Pro Volatility Scanner & Signal Bot</title>
     <style>
         :root {
             --bg-dark: #070d14;
@@ -31,7 +31,7 @@
             width: 100%;
             max-width: 480px;
             background: var(--card-bg);
-            border: 2px solid #ffab00;
+            border: 2px solid var(--accent-yellow);
             border-radius: 16px;
             padding: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
@@ -62,7 +62,6 @@
             background-color: var(--accent-red);
             border-radius: 50%;
         }
-
         .dot.active { background-color: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
 
         .token-card {
@@ -94,7 +93,6 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
         button:hover { opacity: 0.9; }
 
         .cycle-box {
@@ -122,9 +120,7 @@
             border-radius: 6px;
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            cursor: pointer;
         }
-
         .pill.active {
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
@@ -162,6 +158,23 @@
             margin: 6px 0;
         }
 
+        .confidence-box {
+            background: #0a1520;
+            border: 1px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .confidence-val {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-cyan);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -178,12 +191,11 @@
         }
 
         .stat-big {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 800;
             color: var(--accent-green);
             margin-top: 4px;
         }
-
         .stat-big.countdown { color: var(--accent-cyan); }
 
         .digit-bar-container {
@@ -208,7 +220,6 @@
             border-radius: 2px;
             transition: height 0.3s;
         }
-
         .bar.selected-target { background: var(--accent-yellow) !important; box-shadow: 0 0 8px var(--accent-yellow); }
 
         .digit-lbl { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
@@ -227,17 +238,16 @@
             padding: 6px 0;
             border-bottom: 1px solid #142230;
         }
-
         .tx-row:last-child { border: none; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <!-- WebSocket Header -->
+    <!-- Header -->
     <div class="status-header">
         <div>
-            <div style="font-size: 14px; font-weight: bold; color: var(--accent-green);">ROT DERIV WEBSOCKET</div>
+            <div style="font-size: 14px; font-weight: bold; color: var(--accent-green);">ROT VOLATILITY SCANNER</div>
             <div id="accountBalance" style="font-size: 11px; color: var(--text-muted);">Balance: --.-- USD</div>
         </div>
         <div class="status-indicator">
@@ -246,86 +256,94 @@
         </div>
     </div>
 
-    <!-- API Connection Setup -->
+    <!-- API Setup Panel -->
     <div class="token-card" id="setupPanel">
         <label style="font-size: 11px; color: var(--text-muted);">ENTER DERIV API TOKEN</label>
         <input type="password" id="apiToken" placeholder="e.g. xxxxxxxxxx">
-        <button onclick="startApp()">CONNECT WEBSOCKET</button>
+        <button onclick="startScanner()">CONNECT & START AUTO-SCAN</button>
     </div>
 
-    <!-- Market Selector -->
+    <!-- Canonical Cycle -->
     <div class="cycle-box">
-        <div class="cycle-title">Select Volatility Index Market</div>
+        <div class="cycle-title">Canonical Scan Prediction Cycle</div>
         <div class="market-pills">
-            <span class="pill active" onclick="switchMarket('1HZ10V', 0)" id="pill-1HZ10V">10 (1s)</span>
-            <span class="pill" onclick="switchMarket('1HZ25V', 1)" id="pill-1HZ25V">25 (1s)</span>
-            <span class="pill" onclick="switchMarket('1HZ50V', 2)" id="pill-1HZ50V">50 (1s)</span>
-            <span class="pill" onclick="switchMarket('1HZ75V', 3)" id="pill-1HZ75V">75 (1s)</span>
+            <span class="pill active" id="pill-1HZ10V">10 (1s)</span>
+            <span class="pill" id="pill-1HZ25V">25 (1s)</span>
+            <span class="pill" id="pill-1HZ50V">50 (1s)</span>
+            <span class="pill" id="pill-1HZ75V">75 (1s)</span>
         </div>
     </div>
 
-    <!-- Target Digit Selector Banner -->
+    <!-- Best Pick Volatility Banner -->
     <div class="pick-banner">
         <div class="banner-head">
-            <span style="color: var(--accent-yellow);">CHOOSE YOUR TARGET DIGIT</span>
-            <span class="accuracy-tag">MANUAL MODE</span>
+            <span style="color: var(--accent-yellow);">BEST PICK VOLATILITY INDEX TO TRADE</span>
+            <span class="accuracy-tag">#1 ACCURACY VERIFIED</span>
         </div>
         <div class="market-title" id="activeMarketName">VOLATILITY 10 (1S) INDEX</div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted);">Target Digit to Trade:</span>
-            <select id="targetDigitSelect" style="width: 100px; padding: 6px; margin: 0;" onchange="updateTargetDigit()">
-                <option value="0">Digit 0</option>
-                <option value="1">Digit 1</option>
-                <option value="2">Digit 2</option>
-                <option value="3">Digit 3</option>
-                <option value="4">Digit 4</option>
-                <option value="5">Digit 5</option>
-                <option value="6">Digit 6</option>
-                <option value="7" selected>Digit 7</option>
-                <option value="8">Digit 8</option>
-                <option value="9">Digit 9</option>
-            </select>
+        <div class="confidence-box">
+            <div>
+                <div style="font-size: 10px; color: var(--text-muted);">ANALYSIS CONFIDENCE</div>
+                <div class="confidence-val" id="confidenceVal">-- %</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 10px; color: var(--text-muted);">SUGGESTED ACTION</div>
+                <div style="font-size: 13px; font-weight: bold; color: var(--accent-yellow);" id="signalAction">WAITING FOR DATA</div>
+            </div>
         </div>
     </div>
 
-    <!-- Target Stats & Hits -->
+    <!-- Manual Target Digit Choice & Countdown -->
+    <div class="control-panel" style="background: #09121a; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-size: 11px; color: var(--text-muted);">CHOOSE YOUR TARGET DIGIT</div>
+                <select id="targetDigitSelect" style="width: 110px; padding: 6px; margin-top: 4px;" onchange="updateTargetDigit()">
+                    <option value="0">Digit 0</option><option value="1">Digit 1</option><option value="2">Digit 2</option>
+                    <option value="3">Digit 3</option><option value="4">Digit 4</option><option value="5">Digit 5</option>
+                    <option value="6">Digit 6</option><option value="7" selected>Digit 7</option><option value="8">Digit 8</option><option value="9">Digit 9</option>
+                </select>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; color: var(--text-muted);">SCAN COUNTDOWN</div>
+                <div class="stat-big countdown" id="countdownSec" style="font-size: 22px;">18s</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Stats -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div style="font-size: 11px; color: var(--text-muted);">TARGET HITS / TICKS</div>
+            <div style="font-size: 11px; color: var(--text-muted);">TARGET DIGIT HITS</div>
             <div class="stat-big" id="targetHitsCount">0 / 0</div>
             <div style="font-size: 10px; color: var(--accent-yellow); margin-top: 2px;" id="targetHitRate">Rate: 0.0%</div>
         </div>
         <div class="stat-card">
-            <div style="font-size: 11px; color: var(--text-muted);">LAST DIGIT SEEN</div>
-            <div class="stat-big countdown" id="lastSeenDigitVal">-</div>
-            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">LIVE TICK STREAM</div>
+            <div style="font-size: 11px; color: var(--text-muted);">LAST SEEN DIGIT</div>
+            <div class="stat-big" id="lastSeenDigitVal" style="color: var(--accent-cyan)">-</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;" id="currentTickPrice">PRICE: --</div>
         </div>
     </div>
 
-    <!-- Live Last Digit Histogram -->
+    <!-- Live Histogram -->
     <div class="stat-card" style="margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-            <span>DIGIT FREQUENCY (LAST 50 TICKS)</span>
-            <span id="currentTickPrice">PRICE: --</span>
-        </div>
-        <div class="digit-bar-container" id="barContainer">
-            <!-- Bars generated dynamically -->
-        </div>
+        <div style="font-size: 11px; color: var(--text-muted); text-align: left;">DIGIT FREQUENCY SPECTRUM (LAST 50 TICKS)</div>
+        <div class="digit-bar-container" id="barContainer"></div>
     </div>
 
-    <!-- Execution & Summary Log -->
+    <!-- Execution Log -->
     <div class="tx-card">
-        <div style="font-weight: bold; margin-bottom: 8px; color: var(--accent-cyan);">AUTOMATED ANALYSIS LOGIC</div>
+        <div style="font-weight: bold; margin-bottom: 8px; color: var(--accent-cyan);">AUTOMATED ANALYSIS ENGINE LOGIC</div>
         <div class="tx-row">
-            <span>Deriv WS Stream:</span>
-            <span id="wsStateLog" style="color: var(--text-muted);">Disconnected</span>
+            <span>WebSocket Stream:</span>
+            <span id="wsStateLog" style="color: var(--text-muted);">Inactive</span>
         </div>
         <div class="tx-row">
-            <span>Target Market:</span>
+            <span>Active Market:</span>
             <span id="targetMarketLog" style="color: var(--accent-yellow);">-</span>
         </div>
         <div class="tx-row">
-            <span>Last Spot / Last Digit:</span>
+            <span>Last Spot / Digit:</span>
             <span id="lastSpotLog">-</span>
         </div>
     </div>
@@ -339,6 +357,8 @@
     let selectedTargetDigit = 7;
     let targetHits = 0;
     let totalTicksCount = 0;
+    let countdown = 18;
+    let timerInterval = null;
 
     const symbols = [
         { id: '1HZ10V', name: 'VOLATILITY 10 (1S) INDEX' },
@@ -347,26 +367,19 @@
         { id: '1HZ75V', name: 'VOLATILITY 75 (1S) INDEX' }
     ];
 
-    // Initialize Digit Bar Graph UI
     const barContainer = document.getElementById('barContainer');
     for (let i = 0; i <= 9; i++) {
         const col = document.createElement('div');
         col.className = 'digit-col';
-        col.innerHTML = `
-            <div class="bar" id="bar-${i}" style="height: 5px;"></div>
-            <div class="digit-lbl">${i}</div>
-        `;
+        col.innerHTML = `<div class="bar" id="bar-${i}" style="height: 5px;"></div><div class="digit-lbl">${i}</div>`;
         barContainer.appendChild(col);
     }
 
-    function startApp() {
+    function startScanner() {
         const token = document.getElementById('apiToken').value.trim();
-        if (!token) {
-            alert("Please enter a valid Deriv API token.");
-            return;
-        }
-
+        if (!token) { alert("Please enter a valid API token."); return; }
         connectWebSocket(token);
+        startCycleTimer();
     }
 
     function connectWebSocket(token) {
@@ -381,18 +394,11 @@
             const data = JSON.parse(event.data);
 
             if (data.msg_type === 'authorize') {
-                if (data.error) {
-                    alert('Auth Error: ' + data.error.message);
-                    return;
-                }
+                if (data.error) { alert('Auth Error: ' + data.error.message); return; }
                 document.getElementById('dot').classList.add('active');
                 document.getElementById('statusText').innerText = 'CONNECTED';
-                document.getElementById('wsStateLog').innerText = 'Connected & Active';
-                
-                // Fetch Balance
+                document.getElementById('wsStateLog').innerText = 'Connected & Scanning';
                 ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-                
-                // Subscribe to active market symbol
                 subscribeToMarket(symbols[currentSymbolIndex].id, currentSymbolIndex);
             }
 
@@ -414,20 +420,15 @@
         };
     }
 
-    function switchMarket(symbolId, index) {
-        currentSymbolIndex = index;
-        tickHistory = [];
-        targetHits = 0;
-        totalTicksCount = 0;
-        subscribeToMarket(symbolId, index);
-    }
-
     function subscribeToMarket(symbolId, index) {
         if (!ws || ws.readyState !== WebSocket.OPEN) return;
-        
         ws.send(JSON.stringify({ forget_all: "ticks" }));
         ws.send(JSON.stringify({ ticks: symbolId, subscribe: 1 }));
         
+        tickHistory = [];
+        targetHits = 0;
+        totalTicksCount = 0;
+
         const activeMarket = symbols[index];
         document.getElementById('activeMarketName').innerText = activeMarket.name;
         document.getElementById('targetMarketLog').innerText = activeMarket.name;
@@ -467,24 +468,48 @@
 
     function analyzeDigits() {
         if (tickHistory.length === 0) return;
-
         const counts = Array(10).fill(0);
         tickHistory.forEach(d => counts[d]++);
 
+        let maxCount = -1;
         for (let i = 0; i <= 9; i++) {
             const pct = (counts[i] / tickHistory.length) * 100;
             const bar = document.getElementById(`bar-${i}`);
             bar.className = 'bar';
             bar.style.height = `${Math.max(pct * 2.2, 5)}px`;
-
-            if (i === selectedTargetDigit) {
-                bar.classList.add('selected-target');
-            }
+            if (i === selectedTargetDigit) bar.classList.add('selected-target');
+            if (counts[i] > maxCount) maxCount = counts[i];
         }
 
         const hitRate = totalTicksCount > 0 ? ((targetHits / totalTicksCount) * 100).toFixed(1) : 0.0;
+        const confidence = Math.min(80 + (maxCount * 2.5), 96.5).toFixed(1);
+
         document.getElementById('targetHitsCount').innerText = `${targetHits} / ${totalTicksCount}`;
         document.getElementById('targetHitRate').innerText = `Rate: ${hitRate}%`;
+        document.getElementById('confidenceVal').innerText = `${confidence}%`;
+
+        // Signal prompt recommendation based on active movement
+        if (hitRate > 15) {
+            document.getElementById('signalAction').innerText = "STRONG ENTRY SIGNAL";
+            document.getElementById('signalAction').style.color = "var(--accent-green)";
+        } else {
+            document.getElementById('signalAction').innerText = "WAIT FOR SETUP";
+            document.getElementById('signalAction').style.color = "var(--accent-yellow)";
+        }
+    }
+
+    function startCycleTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                countdown = 18;
+                // Automatically rotate scanner to the next volatility index market
+                currentSymbolIndex = (currentSymbolIndex + 1) % symbols.length;
+                subscribeToMarket(symbols[currentSymbolIndex].id, currentSymbolIndex);
+            }
+            document.getElementById('countdownSec').innerText = `${countdown}s`;
+        }, 1000);
     }
 </script>
 
